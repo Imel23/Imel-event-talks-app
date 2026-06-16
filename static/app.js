@@ -2,6 +2,8 @@
 const refreshBtn   = document.getElementById('refreshBtn');
 const refreshIcon  = document.getElementById('refreshIcon');
 const refreshLabel = document.getElementById('refreshLabel');
+const exportBtn    = document.getElementById('exportBtn');
+const copyToast    = document.getElementById('copyToast');
 const statsBar     = document.getElementById('statsBar');
 const statEntries  = document.getElementById('statEntries');
 const statUpdated  = document.getElementById('statUpdated');
@@ -59,19 +61,33 @@ function buildCard(entry, idx) {
       <div class="update-item">
         <div class="update-item-header">
           <span class="cat-badge ${cls}">${escHtml(u.category)}</span>
-          <button
-            class="btn-tweet-item"
-            aria-label="Tweet this update"
-            data-date="${safeDate}"
-            data-cat="${safeCat}"
-            data-text="${safePlain}"
-            data-link="${safeLink}"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-            </svg>
-            Tweet
-          </button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button
+              class="btn-copy-item"
+              aria-label="Copy update to clipboard"
+              data-text="${safePlain}"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              Copy
+            </button>
+            <button
+              class="btn-tweet-item"
+              aria-label="Tweet this update"
+              data-date="${safeDate}"
+              data-cat="${safeCat}"
+              data-text="${safePlain}"
+              data-link="${safeLink}"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+              Tweet
+            </button>
+          </div>
         </div>
         <div class="update-body">${u.html}</div>
       </div>
@@ -100,6 +116,13 @@ function buildCard(entry, idx) {
     });
   });
 
+  // Attach copy listeners
+  card.querySelectorAll('.btn-copy-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      copyToClipboard(decodeURIComponent(btn.dataset.text), btn);
+    });
+  });
+
   return card;
 }
 
@@ -112,14 +135,85 @@ function escHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+/* ── Copy to clipboard ──────────────────────────────── */
+let toastTimer = null;
+
+function showToast(msg = 'Copié !') {
+  copyToast.textContent = msg;
+  copyToast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => copyToast.classList.remove('show'), 2000);
+}
+
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    // Briefly style the button green
+    btn.classList.add('copied');
+    btn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      Copié !
+    `;
+    showToast('✓ Copié dans le presse-papiers');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Copy
+      `;
+    }, 2000);
+  }).catch(() => showToast('⚠ Erreur de copie'));
+}
+
+/* ── CSV Export ─────────────────────────────────────── */
+function escCsv(val) {
+  const s = String(val ?? '').replace(/"/g, '""');
+  return `"${s}"`;
+}
+
+function exportCSV() {
+  if (!window._feedData || !window._feedData.length) return;
+
+  const rows = [['Date', 'Category', 'Plain Text', 'Link']];
+  window._feedData.forEach(entry => {
+    entry.updates.forEach(u => {
+      rows.push([
+        escCsv(entry.title),
+        escCsv(u.category),
+        escCsv(u.plain_text),
+        escCsv(entry.link),
+      ]);
+    });
+  });
+
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `bigquery-release-notes-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Export CSV téléchargé');
+}
+
 /* ── Render feed ────────────────────────────────────── */
 function renderFeed(entries) {
   feed.innerHTML = '';
   if (!entries || entries.length === 0) {
     emptyState.classList.remove('hidden');
+    exportBtn.disabled = true;
     return;
   }
   emptyState.classList.add('hidden');
+  window._feedData = entries;        // cache for CSV export
+  exportBtn.disabled = false;
   entries.forEach((entry, i) => feed.appendChild(buildCard(entry, i)));
 
   // Stats
@@ -134,6 +228,7 @@ function renderFeed(entries) {
 async function fetchNotes() {
   // UI: loading state
   refreshBtn.disabled = true;
+  exportBtn.disabled  = true;
   refreshIcon.classList.add('spinning');
   refreshLabel.textContent = 'Loading…';
   skeleton.classList.remove('hidden');
@@ -224,4 +319,5 @@ document.addEventListener('keydown', e => {
 
 /* ── Init ───────────────────────────────────────────── */
 refreshBtn.addEventListener('click', fetchNotes);
+exportBtn.addEventListener('click', exportCSV);
 fetchNotes();   // auto-load on page open
