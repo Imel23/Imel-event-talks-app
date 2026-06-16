@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BigQuery Release Notes</title>
+  <meta name="description" content="Stay up to date with the latest BigQuery release notes from Google Cloud. Browse, filter, and tweet updates directly." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ── Header ───────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">
+          <!-- BigQuery-ish hexagon SVG -->
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="18,2 33,10 33,26 18,34 3,26 3,10"
+              fill="url(#hexGrad)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <defs>
+              <linearGradient id="hexGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#4285F4"/>
+                <stop offset="100%" stop-color="#1669f0"/>
+              </linearGradient>
+            </defs>
+            <text x="18" y="23" text-anchor="middle" font-size="13" font-weight="700"
+              fill="white" font-family="Inter,sans-serif">BQ</text>
+          </svg>
+        </span>
+        <div>
+          <h1 class="brand-title">BigQuery Release Notes</h1>
+          <p class="brand-sub">Live feed from Google Cloud</p>
+        </div>
+      </div>
+
+      <button id="refreshBtn" class="btn-refresh" title="Refresh feed">
+        <svg id="refreshIcon" class="icon-refresh" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        <span id="refreshLabel">Refresh</span>
+      </button>
+    </div>
+
+    <!-- Stats bar -->
+    <div id="statsBar" class="stats-bar hidden">
+      <span id="statEntries">— entries</span>
+      <span class="dot">·</span>
+      <span id="statUpdated">Last updated —</span>
+    </div>
+  </header>
+
+  <!-- ── Main ─────────────────────────────── -->
+  <main class="main">
+
+    <!-- Error banner -->
+    <div id="errorBanner" class="error-banner hidden">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span id="errorMsg">Something went wrong.</span>
+    </div>
+
+    <!-- Skeleton loader -->
+    <div id="skeleton" class="skeleton-grid hidden">
+      <div class="skeleton-card"><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>
+      <div class="skeleton-card"><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>
+      <div class="skeleton-card"><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>
+      <div class="skeleton-card"><div class="sk sk-title"></div><div class="sk sk-line"></div><div class="sk sk-line short"></div></div>
+    </div>
+
+    <!-- Release notes grid -->
+    <div id="feed" class="feed"></div>
+
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state hidden">
+      <p>No release notes found. Try refreshing.</p>
+    </div>
+
+  </main>
+
+  <!-- ── Tweet Modal ───────────────────────── -->
+  <div id="tweetModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Tweet this update">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg class="twitter-bird" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+          <span>Compose Tweet</span>
+        </div>
+        <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="tweet-meta">
+          <span id="tweetDate" class="tweet-date-badge"></span>
+          <span id="tweetCategory" class="tweet-cat-badge"></span>
+        </div>
+        <textarea id="tweetText" class="tweet-textarea" maxlength="280"
+          placeholder="Write your tweet…" spellcheck="true"></textarea>
+        <div class="tweet-footer">
+          <span id="charCount" class="char-count">0 / 280</span>
+          <a id="tweetLink" href="#" target="_blank" rel="noopener noreferrer" class="btn-tweet">
+            <svg class="twitter-bird-sm" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            Tweet
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
