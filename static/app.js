@@ -269,14 +269,17 @@ function showError(msg) {
 
 /* ── Tweet Modal ────────────────────────────────────── */
 function openTweetModal(date, category, plainText, link) {
-  // Build a sensible default tweet text (280-char aware)
-  const MAX = 280;
-  const hashtags = '#BigQuery #GoogleCloud';
-  const suffix   = `\n${link}\n${hashtags}`;
-  const maxBody  = MAX - suffix.length;
+  const HARD_MAX  = 280;
+  const TARGET    = 210;   // aim for ~210 chars → leaves ~70 chars of editing room
+  const hashtags  = '#BigQuery #GoogleCloud';
+  const suffix    = `\n${link}\n${hashtags}`;
+  const maxBody   = TARGET - suffix.length;  // chars available for the body text
 
+  // Trim plain text to maxBody at a word boundary to avoid cutting mid-word
   let body = `📢 BigQuery update (${date}) — ${category}:\n${plainText}`;
-  if (body.length > maxBody) body = body.slice(0, maxBody - 1) + '…';
+  if (body.length > maxBody) {
+    body = body.slice(0, maxBody).replace(/\s+\S*$/, '') + '…';
+  }
 
   const full = body + suffix;
 
@@ -291,6 +294,7 @@ function openTweetModal(date, category, plainText, link) {
   tweetModal.classList.remove('hidden');
   tweetText.focus();
 }
+
 
 function updateTweetLink() {
   const text = tweetText.value;
