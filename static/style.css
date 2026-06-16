@@ -27,6 +27,30 @@
 
 html { scroll-behavior: smooth; }
 
+/* ── Light mode overrides ──────────────────────────── */
+html.light {
+  --bg:        #f0f4ff;
+  --bg2:       #ffffff;
+  --bg3:       #e4ebf8;
+  --surface:   #ffffff;
+  --surface2:  #dde6f7;
+  --border:    rgba(66, 133, 244, 0.18);
+  --glow:      rgba(66, 133, 244, 0.18);
+  --text:      #111827;
+  --text2:     #3d5578;
+  --text3:     #7a90b0;
+  --shadow:    0 4px 24px rgba(100,130,200,0.13);
+}
+
+/* Smooth theme transition on all elements */
+*, *::before, *::after {
+  transition:
+    background-color 0.3s ease,
+    border-color     0.3s ease,
+    color            0.3s ease,
+    box-shadow       0.3s ease;
+}
+
 body {
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
@@ -85,6 +109,36 @@ body {
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+}
+
+/* Theme toggle button */
+.btn-theme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: color var(--trans), border-color var(--trans),
+              background var(--trans), transform var(--trans);
+  flex-shrink: 0;
+}
+
+.btn-theme:hover {
+  color: var(--accent);
+  border-color: rgba(66,133,244,0.4);
+  background: rgba(66,133,244,0.08);
+  transform: rotate(15deg) scale(1.08);
+}
+
+.theme-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 /* Export CSV button */

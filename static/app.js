@@ -3,6 +3,9 @@ const refreshBtn   = document.getElementById('refreshBtn');
 const refreshIcon  = document.getElementById('refreshIcon');
 const refreshLabel = document.getElementById('refreshLabel');
 const exportBtn    = document.getElementById('exportBtn');
+const themeToggle  = document.getElementById('themeToggle');
+const iconSun      = document.getElementById('iconSun');
+const iconMoon     = document.getElementById('iconMoon');
 const copyToast    = document.getElementById('copyToast');
 const statsBar     = document.getElementById('statsBar');
 const statEntries  = document.getElementById('statEntries');
@@ -317,7 +320,35 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeTweetModal();
 });
 
+/* ── Theme toggle ────────────────────────────────────── */
+function applyTheme(isLight) {
+  if (isLight) {
+    document.documentElement.classList.add('light');
+    iconSun.classList.add('hidden');    // hide sun
+    iconMoon.classList.remove('hidden'); // show moon (click to go dark)
+    themeToggle.title = 'Passer en mode sombre';
+  } else {
+    document.documentElement.classList.remove('light');
+    iconSun.classList.remove('hidden'); // show sun (click to go light)
+    iconMoon.classList.add('hidden');   // hide moon
+    themeToggle.title = 'Passer en mode clair';
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('bq-theme');
+  // Default to dark; only go light if explicitly saved
+  applyTheme(saved === 'light');
+}
+
+themeToggle.addEventListener('click', () => {
+  const isLight = document.documentElement.classList.toggle('light');
+  localStorage.setItem('bq-theme', isLight ? 'light' : 'dark');
+  applyTheme(isLight);
+});
+
 /* ── Init ───────────────────────────────────────────── */
+initTheme();   // apply saved preference before first paint
 refreshBtn.addEventListener('click', fetchNotes);
 exportBtn.addEventListener('click', exportCSV);
 fetchNotes();   // auto-load on page open
